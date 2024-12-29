@@ -1,111 +1,99 @@
-import pickle
-import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
+import streamlit as st
 
-# Load the data
-@st.cache
-def load_data():
-    df = pd.read_csv('kc_house_data.csv', usecols=['bedrooms', 'bathrooms', 'sqft_living', 'grade', 'price', 'yr_built'])
-    # Data cleaning
-    df['bathrooms'] = df['bathrooms'].astype('int')
-    df['bedrooms'] = df['bedrooms'].replace(33, 3)
-    return df
+# Load the dataset
+df = pd.read_csv('/content/kc_house_data.csv', usecols=['bedrooms', 'bathrooms', 'sqft_living', 'grade', 'price', 'yr_built'])
 
-# Application layout
-def main():
-    st.title("House Price Prediction App")
-    st.sidebar.title("Navigation")
-    options = ["Overview", "Data Analysis", "Model Training", "Predict House Price"]
-    choice = st.sidebar.selectbox("Choose an option", options)
+# Data Preprocessing
+df['bathrooms'] = df['bathrooms'].astype('int')
+df['bedrooms'] = df['bedrooms'].replace(33,3)
 
-    df = load_data()
+# Streamlit header
+st.title('House Price Predictor')
+st.write("This app predicts house prices based on features like the number of bedrooms, bathrooms, living area, and more.")
 
-    if choice == "Overview":
-        st.subheader("Overview of the Dataset")
-        st.write(df.head())
-        st.write("Shape of the dataset:", df.shape)
-        st.write("Dataset Information:")
-        st.write(df.info())
-        st.write("Statistical Summary:")
-        st.write(df.describe())
+# Show basic info and statistical data
+if st.checkbox('Show Data Info'):
+    st.subheader('Data Info')
+    st.write(df.info())
 
-    elif choice == "Data Analysis":
-        st.subheader("Univariate Analysis")
-        st.write("### Bedrooms Distribution")
-        f, axes = plt.subplots(1, 2, figsize=(12, 4))
-        sns.countplot(df['bedrooms'], ax=axes[0])
-        axes[1].boxplot(df['bedrooms'])
-        st.pyplot(f)
+if st.checkbox('Show Statistical Description'):
+    st.subheader('Statistical Description')
+    st.write(df.describe())
 
-        st.write("### Bathrooms Distribution")
-        f, axes = plt.subplots(1, 2, figsize=(12, 4))
-        sns.countplot(df['bathrooms'], ax=axes[0])
-        axes[1].boxplot(df['bathrooms'])
-        st.pyplot(f)
+# Visualizations
+st.subheader('Univariate Analysis')
 
-        st.write("### Sqft Living Distribution")
-        f, axes = plt.subplots(1, 2, figsize=(12, 4))
-        df['sqft_living'].plot(kind='kde', ax=axes[0])
-        axes[1].boxplot(df['sqft_living'])
-        st.pyplot(f)
+# Bedrooms distribution
+st.write('### Bedrooms Distribution')
+fig1, axes = plt.subplots(1, 2, figsize=(12, 4))
+sns.countplot(df['bedrooms'], ax=axes[0])
+axes[1].boxplot(df['bedrooms'])
+st.pyplot(fig1)
 
-        st.write("### Grade Distribution")
-        f, axes = plt.subplots(1, 2, figsize=(12, 4))
-        sns.countplot(df['grade'], ax=axes[0])
-        axes[1].boxplot(df['grade'])
-        st.pyplot(f)
+# Bathrooms distribution
+st.write('### Bathrooms Distribution')
+fig2, axes = plt.subplots(1, 2, figsize=(12, 4))
+sns.countplot(df['bathrooms'], ax=axes[0])
+axes[1].boxplot(df['bathrooms'])
+st.pyplot(fig2)
 
-        st.write("### Year Built Distribution")
-        f, axes = plt.subplots(1, 2, figsize=(20, 8))
-        sns.countplot(df['yr_built'], ax=axes[0])
-        axes[1].boxplot(df['yr_built'])
-        st.pyplot(f)
+# Sqft Living distribution
+st.write('### Sqft Living Distribution')
+fig3, axes = plt.subplots(1, 2, figsize=(12, 4))
+df['sqft_living'].plot(kind='kde', ax=axes[0])
+axes[1].boxplot(df['sqft_living'])
+st.pyplot(fig3)
 
-        st.write("### Pairplot Analysis")
-        sns.pairplot(data=df, x_vars=['bedrooms', 'bathrooms', 'sqft_living', 'grade', 'yr_built'], y_vars=['price'], height=4, aspect=1)
-        st.pyplot()
+# Grade distribution
+st.write('### Grade Distribution')
+fig4, axes = plt.subplots(1, 2, figsize=(12, 4))
+sns.countplot(df['grade'], ax=axes[0])
+axes[1].boxplot(df['grade'])
+st.pyplot(fig4)
 
-        st.write("### Correlation Matrix")
-        st.write(df.corr().style.background_gradient(cmap="coolwarm"))
+# Yr Built distribution
+st.write('### Year Built Distribution')
+fig5, axes = plt.subplots(1, 2, figsize=(12, 4))
+sns.countplot(df['yr_built'], ax=axes[0])
+axes[1].boxplot(df['yr_built'])
+st.pyplot(fig5)
 
-    elif choice == "Model Training":
-        st.subheader("Linear Regression Model Training")
-        x = df.drop(columns='price')
-        y = df['price']
+# Correlation
+st.subheader('Correlation Matrix')
+st.write(df.corr().style.background_gradient().format("{:.2f}"))
 
-        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=4)
-        st.write(f"Training set shape: {x_train.shape}, Testing set shape: {x_test.shape}")
+# Model Training and Prediction
+st.subheader('Model Training')
+x = df.drop(columns='price')
+y = df['price']
 
-        lin_reg = LinearRegression()
-        lin_reg.fit(x_train, y_train)
+# Split the data
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=4)
 
-        st.write("Model Coefficients:")
-        coef_dict = {'Feature': x.columns, 'Coefficient': lin_reg.coef_}
-        st.write(pd.DataFrame(coef_dict))
+# Train the model
+lin_reg = LinearRegression()
+lin_reg.fit(x_train, y_train)
 
-        st.write(f"Model Intercept: {lin_reg.intercept_:.2f}")
+# Display coefficients
+coef_dict = {
+    'features': x.columns,
+    'coef_value': lin_reg.coef_
+}
+coef = pd.DataFrame(coef_dict, columns=['features', 'coef_value'])
+st.write('### Coefficients of the Model')
+st.write(coef)
 
-        st.write("### Model Evaluation")
-        accuracy = lin_reg.score(x_test, y_test)
-        st.write(f"Model Accuracy: {accuracy:.2f}")
+# Model score
+score = lin_reg.score(x_test, y_test)
+st.write(f'### Model Accuracy: {score:.2f}')
 
-    elif choice == "Predict House Price":
-        st.subheader("Predict Your House Price")
-        bedrooms = st.number_input("Number of Bedrooms", min_value=1, max_value=10, value=3)
-        bathrooms = st.number_input("Number of Bathrooms", min_value=1, max_value=10, value=2)
-        sqft_living = st.number_input("Living Area (sqft)", min_value=500, max_value=10000, value=1800)
-        grade = st.number_input("Grade", min_value=1, max_value=13, value=7)
-        yr_built = st.number_input("Year Built", min_value=1900, max_value=2024, value=1990)
-
-        user_input = np.array([[bedrooms, bathrooms, sqft_living, grade, yr_built]])
-        predicted_price = lin_reg.predict(user_input)
-
-        st.write(f"Predicted Price: ${predicted_price[0]:,.2f}")
-
-if __name__ == "__main__":
-    main()
+# User Input for Prediction
+st.subheader('Predict House Price')
+bedrooms = st.number_input('Number of Bedrooms', min_value=1, max_value=10, value=3)
+bathrooms = st.number_input('Number 
