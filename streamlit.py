@@ -96,4 +96,12 @@ st.write(f'### Model Accuracy: {score:.2f}')
 # User Input for Prediction
 st.subheader('Predict House Price')
 bedrooms = st.number_input('Number of Bedrooms', min_value=1, max_value=10, value=3)
-bathrooms = st.number_input('Number 
+bathrooms = st.number_input('Number of Bathrooms', min_value=1, max_value=10, value=2)  # Fixed this line
+sqft_living = st.number_input('Square Footage of Living Area', min_value=100, max_value=10000, value=1800)
+grade = st.number_input('Grade of the House', min_value=1, max_value=13, value=7)
+yr_built = st.number_input('Year the House Was Built', min_value=1900, max_value=2024, value=1990)
+
+# Make prediction
+prediction = lin_reg.predict([[bedrooms, bathrooms, sqft_living, grade, yr_built]])
+st.write(f'Predicted House Price: ${prediction[0]:,.2f}')
+
